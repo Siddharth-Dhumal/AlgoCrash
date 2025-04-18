@@ -12,6 +12,7 @@ INCLUDEPATH += third_party
 SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
+    src/physicsblock.cpp \
     third_party/Box2D/Collision/b2BroadPhase.cpp \
     third_party/Box2D/Collision/b2CollideCircle.cpp \
     third_party/Box2D/Collision/b2CollideEdge.cpp \
@@ -59,10 +60,12 @@ SOURCES += \
     third_party/Box2D/Dynamics/Joints/b2WheelJoint.cpp \
     third_party/Box2D/Rope/b2Rope.cpp
 
+
 HEADERS += \
     include/mainwindow.h \
-    $$files(third_party/Box2D/**/*.h, true)
+    $$files(third_party/Box2D/**/*.h, true) \
+    include/physicsblock.h
 
 # UI Forms
 FORMS += ui/mainwindow.ui
-message("Box2D CPP files: $$files(third_party/Box2D/**/*.cpp, true)")
+
