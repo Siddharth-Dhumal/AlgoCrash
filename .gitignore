@@ -1,0 +1,25 @@
+# Ignore build artifacts
+AlgoCrash/build*/
+AlgoCrash/*.pro.user
+AlgoCrash/*.qmake.stash
+AlgoCrash/Makefile.Debug
+AlgoCrash/Makefile.Release
+
+# Qt‑generated files
+AlgoCrash/moc_*.cpp
+AlgoCrash/qrc_*.cpp
+AlgoCrash/ui_*.h
+
+# IDE settings
+*.user
+*.user.*
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Swap/backup files
+*~
+*.swp
+
