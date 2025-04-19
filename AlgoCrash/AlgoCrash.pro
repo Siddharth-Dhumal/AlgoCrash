@@ -13,6 +13,7 @@ SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
     src/physicsblock.cpp \
+    src/sortingcontroller.cpp \
     third_party/Box2D/Collision/b2BroadPhase.cpp \
     third_party/Box2D/Collision/b2CollideCircle.cpp \
     third_party/Box2D/Collision/b2CollideEdge.cpp \
@@ -64,8 +65,10 @@ SOURCES += \
 HEADERS += \
     include/mainwindow.h \
     $$files(third_party/Box2D/**/*.h, true) \
-    include/physicsblock.h
+    include/physicsblock.h \
+    include/sortingcontroller.h
 
 # UI Forms
-FORMS += ui/mainwindow.ui
+FORMS += ui/mainwindow.ui \
+    ui/customizedatadialog.ui
 
