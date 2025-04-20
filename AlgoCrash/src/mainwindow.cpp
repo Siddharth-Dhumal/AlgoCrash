@@ -29,9 +29,12 @@ MainWindow::MainWindow(QWidget *parent)
 
                 // 0 = Bubble, 1 = Insertion
                 sortController.setAlgorithm(
-                    idx == 0
-                        ? SortingController::BUBBLE
-                        : SortingController::INSERTION
+                    idx == 0 ? SortingController::BUBBLE :
+                        idx == 1 ?  SortingController::SELECTION :
+                          SortingController::INSERTION
+
+
+
                     );
 
                 // Hide the “done” tick and reset stats in the UI

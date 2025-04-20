@@ -9,7 +9,7 @@ public:
     SortingController();
 
     /* ── Algorithm handling ───────────────────────── */
-    enum Algorithm { BUBBLE, INSERTION };
+    enum Algorithm { BUBBLE, INSERTION, SELECTION };
     void setAlgorithm(Algorithm a) { m_algorithm = a; reset(); }
     bool step();                 // generic dispatcher
 
@@ -22,6 +22,7 @@ public:
     int getSwapCount() const { return m_swapCount; }
 
     bool insertionSortStep();
+    bool selectionSortStep();
 
 private:
     enum Phase { HIGHLIGHT, ACTION };
@@ -37,6 +38,10 @@ private:
     /* insertion‑sort bookkeeping */
     size_t m_outerIdx;
     size_t m_innerIdx;
+
+    /* selection-sort bookkeeping */
+    size_t m_minIndex;
+
     Algorithm m_algorithm = BUBBLE;
 
     void performSwap(size_t index1, size_t index2);

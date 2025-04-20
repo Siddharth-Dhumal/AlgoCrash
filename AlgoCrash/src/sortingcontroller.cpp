@@ -8,6 +8,9 @@ SortingController::SortingController()
     , m_isSwapping(false)
     , m_comparisonCount(0)
     , m_swapCount(0)
+    , m_outerIdx(1)
+    , m_innerIdx(1)
+    , m_minIndex(0)
 {
 }
 
@@ -20,6 +23,9 @@ bool SortingController::step()
 
     case INSERTION:
         return insertionSortStep();
+
+    case SELECTION:
+        return selectionSortStep();
 
     // More algorithm adding
 
@@ -138,6 +144,65 @@ bool SortingController::insertionSortStep()
     }
 }
 
+bool SortingController::selectionSortStep()
+{
+    // Terminate if sorting is complete or array size is less than 2
+    if (m_isComplete || m_blocks.size() < 2) return false;
+
+    // Wait if a swap animation is in progress
+    if (m_isSwapping) {
+        for (auto *b : m_blocks)
+            if (b->isMoving()) return true;
+        m_isSwapping = false;
+        for (auto *b : m_blocks) b->highlight(false);
+    }
+
+    if (m_phase == HIGHLIGHT) {
+        // Clear highlights from all blocks
+        for (auto *b : m_blocks) b->highlight(false);
+
+        // Check if there are more elements to compare in the current pass
+        if (m_currentIndex < m_blocks.size()) {
+            // Highlight the current element and the current minimum
+            m_blocks[m_currentIndex]->highlight(true);
+            m_blocks[m_minIndex]->highlight(true);
+            m_comparisonCount++;
+            m_phase = ACTION;
+            return true;
+        } else {
+            // Pass complete: swap the minimum with m_lastSortedIndex
+            if (m_minIndex != m_lastSortedIndex) {
+                performSwap(m_minIndex, m_lastSortedIndex);
+                m_swapCount++;
+                m_isSwapping = true;
+            }
+            // Move to the next pass
+            m_lastSortedIndex++;
+            if (m_lastSortedIndex >= m_blocks.size() - 1) {
+                // Sorting complete
+                m_isComplete = true;
+                for (size_t i = 0; i < m_blocks.size(); ++i)
+                    m_blocks[i]->moveToPosition(i);
+                return false;
+            }
+            // Start a new pass: reset indices
+            m_currentIndex = m_lastSortedIndex + 1;
+            m_minIndex = m_lastSortedIndex;
+            m_phase = HIGHLIGHT;
+            return true;
+        }
+    } else { // ACTION
+        // Update the minimum value
+        if (m_blocks[m_currentIndex]->getValue() < m_blocks[m_minIndex]->getValue()) {
+            m_minIndex = m_currentIndex;
+        }
+        // Move to the next element
+        m_currentIndex++;
+        m_phase = HIGHLIGHT;
+        return true;
+    }
+}
+
 
 void SortingController::performSwap(size_t index1, size_t index2)
 {
@@ -170,7 +235,7 @@ void SortingController::reset()
 
     m_outerIdx          = 1;
     m_innerIdx          = 1;
-
+    m_minIndex = 0;
     // Reset highlights
     for (PhysicsBlock* block : m_blocks) {
         block->highlight(false);
