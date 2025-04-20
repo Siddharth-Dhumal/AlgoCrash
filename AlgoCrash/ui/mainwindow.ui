@@ -38,7 +38,7 @@
         </item>
         <item>
          <property name="text">
-          <string>Insertion Sort (Coming Soon)</string>
+          <string>Insertion Sort</string>
          </property>
         </item>
        </widget>
@@ -46,7 +46,7 @@
       <item>
        <spacer name="horizontalSpacer2">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -70,16 +70,16 @@
     </item>
     <item>
      <widget class="QLabel" name="explanationLabel">
-      <property name="text">
-       <string>Welcome to AlgoCrash! Click 'Start Sort' to begin the visualization.</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
       <property name="font">
        <font>
         <pointsize>12</pointsize>
        </font>
+      </property>
+      <property name="text">
+       <string>Welcome to AlgoCrash! Click 'Start Sort' to begin the visualization.</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignmentFlag::AlignCenter</set>
       </property>
      </widget>
     </item>
@@ -102,7 +102,7 @@
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -154,7 +154,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>36</height>
+     <height>17</height>
     </rect>
    </property>
   </widget>
