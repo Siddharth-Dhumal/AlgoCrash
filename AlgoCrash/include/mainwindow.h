@@ -8,6 +8,7 @@
 #include <Box2D/Box2D.h>
 #include "physicsblock.h"
 #include "sortingcontroller.h"
+#include <QLabel>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -28,6 +29,7 @@ private slots:
     void onStepButtonClicked();
     void onSortButtonClicked();
     void onResetButtonClicked();
+    void onCustomizeButtonClicked();
 
 private:
     Ui::MainWindow *ui;
@@ -42,6 +44,7 @@ private:
 
     void spawnInitialBlocks(const std::vector<int>& values);
     void updateStatistics();
+    QLabel* sortedLabel;
 };
 
 #endif // MAINWINDOW_H

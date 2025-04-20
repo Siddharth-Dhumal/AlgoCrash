@@ -1,7 +1,8 @@
 #include "sortingcontroller.h"
 
 SortingController::SortingController()
-    : m_currentIndex(0)
+    : m_phase(HIGHLIGHT)
+    , m_currentIndex(0)
     , m_lastSortedIndex(0)
     , m_isComplete(false)
     , m_isSwapping(false)
@@ -21,57 +22,59 @@ bool SortingController::bubbleSortStep()
     if (m_isComplete || m_blocks.size() < 2)
         return false;
 
-    // Reset any previous highlights
-    for (PhysicsBlock* block : m_blocks) {
-        block->highlight(false);
-    }
-
-    // If currently in the middle of a swap, wait until it's complete
     if (m_isSwapping) {
-        // Check if blocks are close enough to their target positions
-        // For simplicity, we'll just set it to false immediately
+        bool stillMoving = false;
+        for (auto block : m_blocks) {
+            if (block->isMoving()) {
+                stillMoving = true;
+                break;
+            }
+        }
+        if (stillMoving)
+            return true;
+
         m_isSwapping = false;
+        for (auto block : m_blocks)
+            block->highlight(false);
     }
 
-    if (!m_isSwapping) {
-        // We can proceed with the next comparison
+    if (m_phase == HIGHLIGHT) {
+        for (auto block : m_blocks)
+            block->highlight(false);
+
         if (m_currentIndex + 1 >= m_blocks.size() - m_lastSortedIndex) {
-            // Reached the end of this pass
             m_lastSortedIndex++;
             m_currentIndex = 0;
-
             if (m_lastSortedIndex >= m_blocks.size() - 1) {
                 m_isComplete = true;
-                return false; // Sorting complete
+                for (size_t i = 0; i < m_blocks.size(); ++i)
+                    m_blocks[i]->moveToPosition(i);
+                return false;
             }
         }
 
-        // Get blocks to compare
-        PhysicsBlock* block1 = m_blocks[m_currentIndex];
-        PhysicsBlock* block2 = m_blocks[m_currentIndex + 1];
+        PhysicsBlock* b1 = m_blocks[m_currentIndex];
+        PhysicsBlock* b2 = m_blocks[m_currentIndex + 1];
+        b1->highlight(true);
+        b2->highlight(true);
 
-        // Highlight blocks being compared
-        block1->highlight(true);
-        block2->highlight(true);
-
-        // Increment comparison count
         m_comparisonCount++;
-
-        // Compare and swap if needed
-        int value1 = block1->getValue();
-        int value2 = block2->getValue();
-
-        if (value1 > value2) {
-            // Need to swap
-            performSwap(m_currentIndex, m_currentIndex + 1);
-            m_isSwapping = true;
-            m_swapCount++;
-        }
-
-        m_currentIndex++;
+        m_phase = ACTION;
+        return true;
     }
 
-    return true; // Sorting still in progress
+    else {
+        PhysicsBlock* b1 = m_blocks[m_currentIndex];
+        PhysicsBlock* b2 = m_blocks[m_currentIndex + 1];
+        if (b1->getValue() > b2->getValue()) {
+            performSwap(m_currentIndex, m_currentIndex + 1);
+            m_swapCount++;
+            m_isSwapping = true;
+        }
+        m_currentIndex++;
+        m_phase = HIGHLIGHT;
+        return true;
+    }
 }
 
 void SortingController::performSwap(size_t index1, size_t index2)
@@ -95,6 +98,7 @@ bool SortingController::isSortingComplete() const
 
 void SortingController::reset()
 {
+    m_phase = HIGHLIGHT;
     m_currentIndex = 0;
     m_lastSortedIndex = 0;
     m_isComplete = false;

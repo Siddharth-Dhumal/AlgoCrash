@@ -6,6 +6,9 @@
 #include <cmath>
 #include <cstdlib>  // for rand
 #include <ctime>    // for time
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QLineEdit>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
@@ -13,7 +16,12 @@ MainWindow::MainWindow(QWidget *parent)
     world(new b2World(b2Vec2(0.0f, -10.0f))) // Gravity
 {
     ui->setupUi(this);
+    sortedLabel = new QLabel("✔ Sorting Complete!", this);
+    sortedLabel->setAlignment(Qt::AlignCenter);
+    sortedLabel->setStyleSheet("color: green; font-weight: bold;");
+    sortedLabel->setVisible(false);
 
+    ui->verticalLayout->insertWidget(3, sortedLabel);
     // Seed random number generator
     srand(static_cast<unsigned int>(time(nullptr)));
 
@@ -71,6 +79,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->stepButton, &QPushButton::clicked, this, &MainWindow::onStepButtonClicked);
     connect(ui->sortButton, &QPushButton::clicked, this, &MainWindow::onSortButtonClicked);
     connect(ui->resetButton, &QPushButton::clicked, this, &MainWindow::onResetButtonClicked);
+    connect(ui->customizeButton, &QPushButton::clicked,
+            this, &MainWindow::onCustomizeButtonClicked);
 
     // Initial view setup
     QTimer::singleShot(0, this, [this]() {
@@ -118,8 +128,19 @@ void MainWindow::onSortButtonClicked()
         sortTimer->stop();
         ui->sortButton->setText("Continue Sort");
     } else {
-        sortTimer->start(500); // Adjust timing as needed
-        ui->sortButton->setText("Pause Sort");
+        world->SetGravity(b2Vec2(0.0f, 0.0f));
+
+        for (PhysicsBlock* block : blocks) {
+            b2Body* b = block->getBody();
+            b2Vec2 p = b->GetPosition();
+            b->SetTransform(p, 0.0f);
+            b->SetType(b2_staticBody);
+            b->SetLinearVelocity(b2Vec2_zero);
+            b->SetAngularVelocity(0.0f);
+        }
+
+        sortTimer->start(1000);  // 1 s per step
+               ui->sortButton->setText("Pause Sort");
     }
 }
 
@@ -147,12 +168,59 @@ void MainWindow::onResetButtonClicked()
     updateStatistics();
 }
 
+void MainWindow::onCustomizeButtonClicked()
+{
+    bool ok;
+    QString text = QInputDialog::getText(
+        this,
+        "Customize Data",
+        "Enter comma-separated integers:",
+        QLineEdit::Normal,
+        QString(),
+        &ok
+        );
+    if (!ok || text.isEmpty())
+        return;
+
+    QStringList parts = text.split(",", Qt::SkipEmptyParts);
+    std::vector<int> values;
+    for (const QString& part : parts) {
+        bool numOk = false;
+        int val = part.trimmed().toInt(&numOk);
+        if (numOk) values.push_back(val);
+    }
+    if (values.empty()) {
+        QMessageBox::warning(
+            this,
+            "Invalid Input",
+            "Please enter valid integers separated by commas."
+            );
+        return;
+    }
+
+    sortTimer->stop();
+    ui->sortButton->setText("Start Sort");
+    sortedLabel->setVisible(false);
+
+    for (PhysicsBlock* block : blocks) {
+        scene->removeItem(block);
+        world->DestroyBody(block->getBody());
+        delete block;
+    }
+    blocks.clear();
+
+    spawnInitialBlocks(values);
+    sortController.setBlocks(blocks);
+    updateStatistics();
+}
+
 void MainWindow::updateStatistics()
 {
-    // If we had labels for statistics, we would update them here
-    // For now, just print to the console for debugging
-    qDebug() << "Comparisons:" << sortController.getComparisonCount()
-             << "Swaps:" << sortController.getSwapCount();
+    int comps = sortController.getComparisonCount();
+    int swaps = sortController.getSwapCount();
+
+    ui->comparisonLabel->setText(QString("Comparisons: %1").arg(comps));
+    ui->swapLabel->setText(QString("Swaps: %1").arg(swaps));
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event)

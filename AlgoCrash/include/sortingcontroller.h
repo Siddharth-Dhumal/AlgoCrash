@@ -17,6 +17,8 @@ public:
     int getSwapCount() const { return m_swapCount; }
 
 private:
+    enum Phase { HIGHLIGHT, ACTION };
+    Phase m_phase;
     std::vector<PhysicsBlock*> m_blocks;
     size_t m_currentIndex;
     size_t m_lastSortedIndex;
