@@ -144,7 +144,7 @@ void MainWindow::spawnInitialBlocks(const std::vector<int>& values)
 
 void MainWindow::onStepButtonClicked()
 {
-    sortController.bubbleSortStep();
+    sortController.step();
     updateStatistics();
 }
 
