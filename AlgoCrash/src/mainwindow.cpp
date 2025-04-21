@@ -16,6 +16,32 @@ MainWindow::MainWindow(QWidget *parent)
     world(new b2World(b2Vec2(0.0f, -10.0f))) // Gravity
 {
     ui->setupUi(this);
+
+    /* ── Algorithm selector ─────────────────────────── */
+    connect(ui->algorithmComboBox,
+            QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this,
+            [this](int idx)
+            {
+                // Stop any running sort
+                sortTimer->stop();
+                ui->sortButton->setText("Start Sort");
+
+                // 0 = Bubble, 1 = Insertion
+                sortController.setAlgorithm(
+                    idx == 0 ? SortingController::BUBBLE :
+                        idx == 1 ?  SortingController::SELECTION :
+                          SortingController::INSERTION
+
+
+
+                    );
+
+                // Hide the “done” tick and reset stats in the UI
+                sortedLabel->setVisible(false);
+                updateStatistics();
+            });
+
     sortedLabel = new QLabel("✔ Sorting Complete!", this);
     sortedLabel->setAlignment(Qt::AlignCenter);
     sortedLabel->setStyleSheet("color: green; font-weight: bold;");
@@ -67,8 +93,8 @@ MainWindow::MainWindow(QWidget *parent)
     // Timer for automatic sorting (disabled by default)
     sortTimer = new QTimer(this);
     connect(sortTimer, &QTimer::timeout, this, [=]() {
-        if (!sortController.bubbleSortStep()) {
-            // Sorting is complete, stop the timer
+
+        if (!sortController.step()) {
             sortTimer->stop();
             ui->sortButton->setText("Start Sort");
         }
@@ -118,7 +144,7 @@ void MainWindow::spawnInitialBlocks(const std::vector<int>& values)
 
 void MainWindow::onStepButtonClicked()
 {
-    sortController.bubbleSortStep();
+    sortController.step();
     updateStatistics();
 }
 
