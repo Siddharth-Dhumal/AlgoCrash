@@ -69,6 +69,8 @@ HEADERS += \
     include/sortingcontroller.h
 
 # UI Forms
-FORMS += ui/mainwindow.ui \
-    ui/customizedatadialog.ui
+FORMS += ui/mainwindow.ui
+
+DISTFILES += \
+    Documents/Sprint2/Codereview
 
