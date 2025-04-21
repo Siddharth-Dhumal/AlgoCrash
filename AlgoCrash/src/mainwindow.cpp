@@ -152,7 +152,8 @@ void MainWindow::onSortButtonClicked()
 {
     if (sortTimer->isActive()) {
         sortTimer->stop();
-        ui->sortButton->setText("Continue Sort");
+        ui->sortButton->setText(
+            "Continue Sort");
     } else {
         world->SetGravity(b2Vec2(0.0f, 0.0f));
 
