@@ -216,6 +216,8 @@ void MainWindow::onSortButtonClicked()
 
 void MainWindow::onResetButtonClicked()
 {
+    world->SetGravity(b2Vec2(0.0f, -10.0f));
+
     // Stop sorting
     sortTimer->stop();
     ui->sortButton->setText("Start Sort");
@@ -244,6 +246,8 @@ void MainWindow::onResetButtonClicked()
 
 void MainWindow::onCustomizeButtonClicked()
 {
+    world->SetGravity(b2Vec2(0.0f, -10.0f));
+
     bool ok;
     QString text = QInputDialog::getText(
         this,
