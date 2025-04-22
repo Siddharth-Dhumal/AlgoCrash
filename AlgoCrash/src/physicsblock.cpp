@@ -12,7 +12,8 @@ PhysicsBlock::PhysicsBlock(b2World* world, float x, float y, int value)
 
     label = new QGraphicsSimpleTextItem(QString::number(value), this);
     QFont f = label->font();
-    f.setPointSize(16);
+    f.setPointSize(28);
+    f.setBold(true);
     label->setFont(f);
     label->setPos(-20, -20);
 
@@ -73,13 +74,15 @@ void PhysicsBlock::moveToPosition(size_t index)
     m_isMoving = true;
 }
 
-void PhysicsBlock::highlight(bool isActive)
+void PhysicsBlock::highlight(bool isActive, bool isSorted)
 {
-    if (isActive) {
-        // Use a bright color for blocks being compared
-        setBrush(QBrush(Qt::yellow));
-    } else {
-        // Reset to default color
-        setBrush(QBrush(Qt::white));
+    if (isSorted) {
+        setBrush(QBrush(Qt::green)); // Green for sorted
+    }
+    else if (isActive) {
+        setBrush(QBrush(Qt::yellow)); // Yellow for active comparison
+    }
+    else {
+        setBrush(QBrush(Qt::white)); // White = default
     }
 }

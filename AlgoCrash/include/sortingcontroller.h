@@ -8,6 +8,8 @@ class SortingController {
 public:
     SortingController();
 
+    std::function<void(const QString&)> statusCallback;
+
     /* ── Algorithm handling ───────────────────────── */
     enum Algorithm { BUBBLE, INSERTION, SELECTION };
     void setAlgorithm(Algorithm a) { m_algorithm = a; reset(); }

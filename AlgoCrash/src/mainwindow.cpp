@@ -17,6 +17,15 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    // Set initial interval to match slider value
+    sortTimer = new QTimer(this);
+    sortTimer->setInterval(ui->speedSlider->value());  // ← default 1000 ms
+
+    connect(ui->speedSlider, &QSlider::valueChanged, this, [this](int newValue) {
+        sortTimer->setInterval(newValue);
+        ui->speedSlider->setToolTip(QString("Speed: %1 ms").arg(newValue));
+    });
+
     /* ── Algorithm selector ─────────────────────────── */
     connect(ui->algorithmComboBox,
             QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -27,20 +36,46 @@ MainWindow::MainWindow(QWidget *parent)
                 sortTimer->stop();
                 ui->sortButton->setText("Start Sort");
 
-                // 0 = Bubble, 1 = Insertion
+                // Set algorithm
                 sortController.setAlgorithm(
                     idx == 0 ? SortingController::BUBBLE :
-                        idx == 1 ?  SortingController::SELECTION :
-                          SortingController::INSERTION
+                        idx == 1 ? SortingController::SELECTION :
+                        SortingController::INSERTION);
 
-
-
-                    );
-
-                // Hide the “done” tick and reset stats in the UI
+                // Hide sorted label and update stats
                 sortedLabel->setVisible(false);
                 updateStatistics();
+
+                // 🔽 Update explanation panel
+                switch (idx) {
+                case 0:
+                    ui->algorithmExplanationBrowser->setText(
+                        "🔁 <b>Bubble Sort</b>\n\n"
+                        "• Compares each pair of adjacent elements\n"
+                        "• Swaps them if they’re in the wrong order\n"
+                        "• Repeats until no more swaps needed\n\n"
+                        "<b>Complexity:</b> O(n²)\n<b>Stable:</b> Yes\n<b>Intuition:</b> Heavy values bubble to the top."
+                        );
+                    break;
+                case 1:
+                    ui->algorithmExplanationBrowser->setText(
+                        "📌 <b>Selection Sort</b>\n\n"
+                        "• Repeatedly selects the smallest element\n"
+                        "• Swaps it into its correct position\n\n"
+                        "<b>Complexity:</b> O(n²)\n<b>Stable:</b> No\n<b>Intuition:</b> Picks the smallest and places it correctly."
+                        );
+                    break;
+                case 2:
+                    ui->algorithmExplanationBrowser->setText(
+                        "🪛 <b>Insertion Sort</b>\n\n"
+                        "• Builds the sorted array one item at a time\n"
+                        "• Inserts current element into the correct place\n\n"
+                        "<b>Complexity:</b> O(n²)\n<b>Stable:</b> Yes\n<b>Intuition:</b> Like sorting playing cards."
+                        );
+                    break;
+                }
             });
+
 
     sortedLabel = new QLabel("✔ Sorting Complete!", this);
     sortedLabel->setAlignment(Qt::AlignCenter);
@@ -80,7 +115,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Set up the sorting controller
     sortController.setBlocks(blocks);
-
+    sortController.statusCallback = [this](const QString& msg) {
+        ui->explanationLabel->setText(msg);
+    };
     // Timer to simulate Box2D world
     simTimer = new QTimer(this);
     connect(simTimer, &QTimer::timeout, this, [=]() {
@@ -107,6 +144,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->resetButton, &QPushButton::clicked, this, &MainWindow::onResetButtonClicked);
     connect(ui->customizeButton, &QPushButton::clicked,
             this, &MainWindow::onCustomizeButtonClicked);
+
+    // Trigger algorithm description update on startup
+    int currentIdx = ui->algorithmComboBox->currentIndex();
+    ui->algorithmComboBox->setCurrentIndex((currentIdx + 1) % 3);  // Change to a different one temporarily
+    ui->algorithmComboBox->setCurrentIndex(currentIdx);           // Then back to original
+
 
     // Initial view setup
     QTimer::singleShot(0, this, [this]() {
@@ -166,7 +209,7 @@ void MainWindow::onSortButtonClicked()
             b->SetAngularVelocity(0.0f);
         }
 
-        sortTimer->start(1000);  // 1 s per step
+        sortTimer->start(ui->speedSlider->value());  // 1 s per step
                ui->sortButton->setText("Pause Sort");
     }
 }
@@ -190,6 +233,10 @@ void MainWindow::onResetButtonClicked()
 
     // Reset the sorting controller
     sortController.setBlocks(blocks);
+    sortController.statusCallback = [this](const QString& msg) {
+        ui->explanationLabel->setText(msg);
+    };
+    ui->explanationLabel->setText("Sorting has been reset! Click 'Start Sort' to begin.");
 
     // Update statistics
     updateStatistics();
@@ -238,6 +285,12 @@ void MainWindow::onCustomizeButtonClicked()
 
     spawnInitialBlocks(values);
     sortController.setBlocks(blocks);
+    sortController.statusCallback = [this](const QString& msg) {
+        ui->explanationLabel->setText(msg);
+    };
+
+    ui->explanationLabel->setText("Custom data loaded! Click 'Start Sort' to begin.");
+
     updateStatistics();
 }
 

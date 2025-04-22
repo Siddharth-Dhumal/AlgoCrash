@@ -15,7 +15,7 @@ public:
     void moveToPosition(size_t index);
     bool isMoving() const { return m_isMoving; }
     b2Body* getBody() const { return body; }
-    void highlight(bool isActive);
+    void highlight(bool isActive, bool isSorted = false);
 
 private:
     b2Body* body;

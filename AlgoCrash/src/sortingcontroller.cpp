@@ -70,7 +70,12 @@ bool SortingController::bubbleSortStep()
             m_lastSortedIndex++;
             m_currentIndex = 0;
             if (m_lastSortedIndex >= m_blocks.size() - 1) {
+
                 m_isComplete = true;
+                if (statusCallback)
+                    statusCallback("Bubble Sort complete!");
+                for (auto* block : m_blocks)
+                    block->highlight(true, true); // ← green = sorted
                 for (size_t i = 0; i < m_blocks.size(); ++i)
                     m_blocks[i]->moveToPosition(i);
                 return false;
@@ -81,6 +86,10 @@ bool SortingController::bubbleSortStep()
         PhysicsBlock* b2 = m_blocks[m_currentIndex + 1];
         b1->highlight(true);
         b2->highlight(true);
+        if (statusCallback)
+            statusCallback(QString("Comparing elements at index %1 and %2")
+                               .arg(m_currentIndex)
+                               .arg(m_currentIndex + 1));
 
         m_comparisonCount++;
         m_phase = ACTION;
@@ -91,7 +100,11 @@ bool SortingController::bubbleSortStep()
         PhysicsBlock* b1 = m_blocks[m_currentIndex];
         PhysicsBlock* b2 = m_blocks[m_currentIndex + 1];
         if (b1->getValue() > b2->getValue()) {
+            int val1 = b1->getValue();
+            int val2 = b2->getValue();
             performSwap(m_currentIndex, m_currentIndex + 1);
+            if (statusCallback)
+                statusCallback(QString("Swapping %1 and %2").arg(val1).arg(val2));
             m_swapCount++;
             m_isSwapping = true;
         }
@@ -121,6 +134,10 @@ bool SortingController::insertionSortStep()
             ++m_outerIdx;
             if (m_outerIdx >= m_blocks.size()) {
                 m_isComplete = true;
+                if (statusCallback)
+                    statusCallback("Insertion Sort complete!");
+                for (auto* block : m_blocks)
+                    block->highlight(true, true);  // green
                 return false;
             }
             m_innerIdx = m_outerIdx;
@@ -128,13 +145,23 @@ bool SortingController::insertionSortStep()
 
         m_blocks[m_innerIdx]->highlight(true);
         m_blocks[m_innerIdx - 1]->highlight(true);
+
+        if (statusCallback)
+            statusCallback(QString("Comparing index %1 with index %2")
+                               .arg(m_innerIdx).arg(m_innerIdx - 1));
+
         ++m_comparisonCount;
         m_phase = ACTION;
         return true;
     }
     else {                                  /* ACTION */
         if (m_blocks[m_innerIdx - 1]->getValue() > m_blocks[m_innerIdx]->getValue()) {
+            int val1 = m_blocks[m_innerIdx - 1]->getValue();
+            int val2 = m_blocks[m_innerIdx]->getValue();
             performSwap(m_innerIdx - 1, m_innerIdx);
+
+            if (statusCallback)
+                statusCallback(QString("Swapping %1 and %2").arg(val1).arg(val2));
             ++m_swapCount;
             m_isSwapping = true;
         }
@@ -166,13 +193,26 @@ bool SortingController::selectionSortStep()
             // Highlight the current element and the current minimum
             m_blocks[m_currentIndex]->highlight(true);
             m_blocks[m_minIndex]->highlight(true);
+
+            if (statusCallback)
+                statusCallback(QString("Comparing index %1 with current min at index %2")
+                                   .arg(m_currentIndex).arg(m_minIndex));
+
             m_comparisonCount++;
             m_phase = ACTION;
             return true;
         } else {
             // Pass complete: swap the minimum with m_lastSortedIndex
             if (m_minIndex != m_lastSortedIndex) {
+
+                int val1 = m_blocks[m_minIndex]->getValue();
+                int val2 = m_blocks[m_lastSortedIndex]->getValue();
+
                 performSwap(m_minIndex, m_lastSortedIndex);
+
+                if (statusCallback)
+                    statusCallback(QString("Swapping %1 and %2").arg(val1).arg(val2));
+
                 m_swapCount++;
                 m_isSwapping = true;
             }
@@ -181,6 +221,10 @@ bool SortingController::selectionSortStep()
             if (m_lastSortedIndex >= m_blocks.size() - 1) {
                 // Sorting complete
                 m_isComplete = true;
+                if (statusCallback)
+                    statusCallback("Selection Sort complete!");
+                for (auto* block : m_blocks)
+                    block->highlight(true, true); // green
                 for (size_t i = 0; i < m_blocks.size(); ++i)
                     m_blocks[i]->moveToPosition(i);
                 return false;
@@ -195,6 +239,9 @@ bool SortingController::selectionSortStep()
         // Update the minimum value
         if (m_blocks[m_currentIndex]->getValue() < m_blocks[m_minIndex]->getValue()) {
             m_minIndex = m_currentIndex;
+
+            if (statusCallback)
+                statusCallback(QString("New minimum found at index %1").arg(m_minIndex));
         }
         // Move to the next element
         m_currentIndex++;
