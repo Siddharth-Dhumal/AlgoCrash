@@ -187,7 +187,23 @@ void MainWindow::spawnInitialBlocks(const std::vector<int>& values)
 
 void MainWindow::onStepButtonClicked()
 {
-    sortController.step();
+    // sortController.step();
+    // updateStatistics();
+
+    world->SetGravity(b2Vec2(0.0f, 0.0f));
+    for (PhysicsBlock* block : blocks) {
+        b2Body* b = block->getBody();
+        b2Vec2 p = b->GetPosition();
+        b->SetTransform(p, 0.0f);
+        b->SetType(b2_staticBody);
+        b->SetLinearVelocity(b2Vec2_zero);
+        b->SetAngularVelocity(0.0f);
+    }
+
+    // Then start the next step.
+    if (!sortController.step()) {
+        ui->sortButton->setText("Start Sort");
+    }
     updateStatistics();
 }
 
