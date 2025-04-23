@@ -1,3 +1,13 @@
+/**
+ * sortingcontroller.cpp
+ *
+ * This file implements the SortingController class which manages the execution
+ * of sorting algorithms (bubble sort, insertion sort, selection sort) and
+ * tracks performance statistics.
+ *
+ * Checked by: [Devin Gupta]
+ */
+
 #include "sortingcontroller.h"
 
 SortingController::SortingController()

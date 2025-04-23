@@ -1,3 +1,11 @@
+/**
+ * mainwindow.h
+ *
+ * This file defines the MainWindow class which serves as the application's
+ * main interface, managing the visualization and user interaction.
+ *
+ * Checked by: Jungbin Moon
+ */
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -30,18 +38,45 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    /**
+     * Constructor for the MainWindow
+     *
+     * @param parent The parent widget, defaults to nullptr
+     */
     explicit MainWindow(QWidget *parent = nullptr);
+    /**
+     * Destructor for the MainWindow
+     */
     ~MainWindow();
 
 protected:
-    /** Keep the artwork letter‑boxed when the user resizes the window. */
+    /**
+     * Handles window resize events to maintain proper visualization
+     *
+     * @param event The resize event information
+     */
     void resizeEvent(QResizeEvent* event) override;
 
 private slots:
-    void onStepButtonClicked();         //!< Execute exactly one controller->step()
-    void onSortButtonClicked();         //!< Toggle continuous sorting
-    void onResetButtonClicked();        //!< Drop old blocks and start over
-    void onCustomizeButtonClicked();    //!< Prompt user for custom list
+    /**
+     * Handles Step button clicks to advance the sorting algorithm one step
+     */
+    void onStepButtonClicked();
+
+    /**
+     * Handles Sort button clicks to start/pause the automatic sorting
+     */
+    void onSortButtonClicked();
+
+    /**
+     * Handles Reset button clicks to reset the simulation
+     */
+    void onResetButtonClicked();
+
+    /**
+     * Handles Customize button clicks to allow custom data input
+     */
+    void onCustomizeButtonClicked();
 
 private:
     Ui::MainWindow *ui;
@@ -54,8 +89,16 @@ private:
     std::vector<PhysicsBlock*> blocks;  //!< Active tiles
     SortingController sortController;   //!< Algorithm driver
 
-    /* Helper routines */
+    /**
+     * Creates the initial blocks with given values
+     *
+     * @param values The values for the blocks to be created
+     */
     void spawnInitialBlocks(const std::vector<int>& values);
+
+    /**
+     * Updates the statistics display (comparisons and swaps)
+     */
     void updateStatistics();
 
     QLabel* sortedLabel;

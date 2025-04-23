@@ -1,3 +1,11 @@
+/**
+ * physicsblock.cpp
+ *
+ * This file implements the PhysicsBlock class which combines Box2D physics with
+ * Qt graphics to create interactive blocks for the sorting visualization.
+ *
+ * Checked by: [Sidharth Dhumal]
+ */
 #include "physicsblock.h"
 #include <cmath>
 #include <QBrush>

@@ -1,3 +1,11 @@
+/**
+ * main.cpp
+ *
+ * This file contains the main entry point for the AlgoCrash application
+ * and demonstrates basic Box2D functionality.
+ *
+ * Checked by: Yen Yee Tan
+ */
 #include <QApplication>
 #include <QDebug>
 #include "mainwindow.h"
@@ -5,6 +13,13 @@
 // Box2D
 #include <Box2D/Box2D.h>
 
+/**
+ * Main entry point for the application
+ *
+ * @param argc Argument count
+ * @param argv Argument values
+ * @return Application exit code
+ */
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);

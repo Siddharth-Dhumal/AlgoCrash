@@ -1,3 +1,11 @@
+/**
+ * physicsblock.h
+ *
+ * This file defines the PhysicsBlock class which combines Box2D physics
+ * with Qt graphics to create interactive blocks for the visualization.
+ *
+ * Checked by: Siddharth Dhumal
+ */
 #ifndef PHYSICSBLOCK_H
 #define PHYSICSBLOCK_H
 
@@ -5,13 +13,11 @@
 #include <QGraphicsSimpleTextItem>
 #include <Box2D/Box2D.h>
 
-/*!
- * \class PhysicsBlock
- * \brief Single sortable “tile” with a Box2D body and a text label.
+/**
+ * PhysicsBlock
  *
- * Each PhysicsBlock has both a QGraphicsRectItem and
- * a Box2D b2Body. This helps to highlight itself in
- * yellow during comparisons or green once the sorting started.
+ * Represents a physical block in the simulation that follows Box2D physics
+ * and is rendered using Qt graphics. Used to visualize values being sorted.
  */
 class PhysicsBlock : public QGraphicsRectItem
 {
@@ -26,25 +32,44 @@ public:
      */
     PhysicsBlock(b2World* world, float x, float y, int value);
 
-    /*! Sync Box2D state shows in the  Qt graphics (It is called on each physics step). */
+    /**
+     * Updates the graphical position to match the physics position
+     */
     void syncWithPhysics();
 
-    /*! Numeric value carried by the block. */
+    /**
+     * Gets the value of this block
+     *
+     * @return The block's value
+     */
     int getValue() const { return m_value; }
 
-    /*! Animate horizontally so that the block ends up at slot \a index. */
+    /**
+     * Moves the block to the specified index position
+     *
+     * @param index The target position index
+     */
     void moveToPosition(size_t index);
 
-    /*! Returns true during a running animation. */
+    /**
+     * Checks if the block is currently moving
+     *
+     * @return True if the block is moving, false otherwise
+     */
     bool isMoving() const { return m_isMoving; }
 
-    /*! A raw Box2D body(Useful when the controller needs direct access). */
+    /**
+     * Gets the Box2D body of this block
+     *
+     * @return The Box2D body
+     */
     b2Body* getBody() const { return body; }
 
-    /*!
-     * \brief Change the fill colour to indicate comparison or completion.
-     * \param isActive   Return true when the block is under examination.
-     * \param isSorted   Return true once the final position is fixed.
+    /**
+     * Highlights the block for visualization purposes
+     *
+     * @param isActive Whether the block is being compared/active
+     * @param isSorted Whether the block is in its sorted position
      */
     void highlight(bool isActive, bool isSorted = false);
 

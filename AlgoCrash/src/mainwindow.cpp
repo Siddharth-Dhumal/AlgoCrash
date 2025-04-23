@@ -1,3 +1,11 @@
+/**
+ * mainwindow.cpp
+ *
+ * This file implements the MainWindow class which serves as the application's
+ * main interface, handling UI interaction, physics simulation, and sorting visualization.
+ *
+ * Checked by: [Yen yee tan]
+ */
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QResizeEvent>

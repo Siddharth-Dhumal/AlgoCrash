@@ -1,52 +1,113 @@
+/**
+ * sortingcontroller.h
+ *
+ * This file defines the SortingController class which manages the execution
+ * of sorting algorithms and tracks statistics about their performance.
+ *
+ * Checked by: Devin Gupta
+ */
 #ifndef SORTINGCONTROLLER_H
 #define SORTINGCONTROLLER_H
 
 #include <vector>
 #include "physicsblock.h"
 
-/*!
- * \class SortingController
- * \brief A controoler that drives step-by-step execution of several sorting algorithms.
+/**
+ * SortingController
  *
- * The controller is intentionally stateless w.r.t. the UI.
- * This helps to manipulates the PhysicsBlock objects directly
- * and also reports status via a std::function callback so that
- * the MainWindow can keep mirroring the progress in Qt widgets.
+ * Manages the execution of different sorting algorithms on a collection
+ * of PhysicsBlock objects, tracking statistics and providing step-by-step
+ * visualization.
  */
 class SortingController {
 public:
+    /**
+     * Constructor for the SortingController
+     */
     SortingController();
 
-    /*! An optional callback for the UI status updates. */
+    /**
+     * Callback function to report status updates during sorting
+     */
     std::function<void(const QString&)> statusCallback;
 
-    /*! ── Algorithm handling ───────────────────────── */
+    /**
+     * Enumeration of the supported sorting algorithms
+     */
     enum Algorithm { BUBBLE, INSERTION, SELECTION };
 
-    /*! Set up Algorithm user needed and rewind its internal state. */
+    /**
+     * Sets the current algorithm and resets the controller
+     *
+     * @param a The algorithm to use
+     */
     void setAlgorithm(Algorithm a) { m_algorithm = a; reset(); }
-    bool step();                 // generic dispatcher
 
-    /*! Provide the blocks to be sorted (does **not** take ownership). */
+    /**
+     * Advances the current algorithm by one step
+     *
+     * @return False when sorting is complete, true otherwise
+     */
+    bool step();
+
+    /**
+     * Sets the blocks to be sorted
+     *
+     * @param blocks The vector of PhysicsBlock pointers
+     */
     void setBlocks(std::vector<PhysicsBlock*>& blocks);
 
-    /*! True when the current run has completed. */
+    /**
+     * Performs one step of the bubble sort algorithm
+     *
+     * @return False when sorting is complete, true otherwise
+     */
+    bool bubbleSortStep();
+
+    /**
+     * Checks if sorting is complete
+     *
+     * @return True if sorting is complete, false otherwise
+     */
     bool isSortingComplete() const;
 
-    /*! Clear all the counters and internal indices (called from MainWindow). */
+    /**
+     * Resets the controller to its initial state
+     */
     void reset();
 
-    /*！ ---------- Metrics ---------- */
+    /**
+     * Gets the current comparison count
+     *
+     * @return The number of comparisons performed
+     */
     int getComparisonCount() const { return m_comparisonCount; }
+
+    /**
+     * Gets the current swap count
+     *
+     * @return The number of swaps performed
+     */
     int getSwapCount() const { return m_swapCount; }
 
-    /*！ Per‑algorithm helpers */
-    bool bubbleSortStep();
+    /**
+     * Performs one step of the insertion sort algorithm
+     *
+     * @return False when sorting is complete, true otherwise
+     */
     bool insertionSortStep();
+
+    /**
+     * Performs one step of the selection sort algorithm
+     *
+     * @return False when sorting is complete, true otherwise
+     */
     bool selectionSortStep();
 
 private:
-    /* ---------- Internal state ---------- */
+    /**
+     * Phases of the sorting algorithms
+     */
     enum Phase { HIGHLIGHT, ACTION };
     Phase m_phase;
     std::vector<PhysicsBlock*> m_blocks;
@@ -63,10 +124,14 @@ private:
 
     /* Selection-sort bookkeeping */
     size_t m_minIndex;
-
     Algorithm m_algorithm = BUBBLE;
 
-    /*！ Per‑algorithm helpers */
+    /**
+     * Performs a swap between two blocks and animates it
+     *
+     * @param index1 The index of the first block
+     * @param index2 The index of the second block
+     */
     void performSwap(size_t index1, size_t index2);
 };
 
