@@ -135,6 +135,7 @@ MainWindow::MainWindow(QWidget *parent)
         world->Step(1.0f / 60.0f, 6, 2);
         for (PhysicsBlock* block : blocks)
             block->syncWithPhysics();
+        updateButtonStates();
     });
     simTimer->start(16); // ~60 FPS
 
@@ -342,4 +343,22 @@ void MainWindow::resizeEvent(QResizeEvent* event)
         // Keep the same scene coordinates but fit view to window
         ui->graphicsView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
     }
+}
+
+bool MainWindow::areBlocksSettled() const
+{
+    for (PhysicsBlock* block : blocks) {
+        b2Body* body = block->getBody();
+        if (body->GetType() != b2_staticBody) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void MainWindow::updateButtonStates()
+{
+    bool ready = areBlocksSettled();
+    ui->sortButton->setEnabled(ready);
+    ui->stepButton->setEnabled(ready);
 }

@@ -102,6 +102,8 @@ private:
     void updateStatistics();
 
     QLabel* sortedLabel;
+    bool areBlocksSettled() const;
+    void updateButtonStates();
 };
 
 #endif // MAINWINDOW_H

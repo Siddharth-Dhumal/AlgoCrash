@@ -67,6 +67,19 @@ void PhysicsBlock::syncWithPhysics()
         pos = body->GetPosition();
     }
 
+    if ((body->GetType() == b2_dynamicBody || body->GetType() == b2_kinematicBody) &&
+        body->GetLinearVelocity().Length() < 0.01f &&
+        body->GetPosition().y <= -4.4f)
+    {
+        body->SetType(b2_staticBody);
+        body->SetLinearVelocity(b2Vec2_zero);
+        body->SetAngularVelocity(0.0f);
+
+        b2Vec2 position = body->GetPosition();
+        position.y = -4.5f;  // uniform landing level
+        body->SetTransform(position, 0.0f);  // Apply position
+    }
+
     setPos(pos.x * 100.0f, -pos.y * 100.0f);
     setRotation(-body->GetAngle() * 180.0f / M_PI);
 }
