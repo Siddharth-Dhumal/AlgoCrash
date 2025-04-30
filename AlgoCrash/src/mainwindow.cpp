@@ -27,11 +27,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Set initial interval to match slider value
     sortTimer = new QTimer(this);
-    sortTimer->setInterval(ui->speedSlider->value());  // ← default 1000 ms
+    int sliderValue = ui->speedSlider->value();
+    int adjustedInterval = std::max(50, 1000 - sliderValue);  // 1000 or a max value depending on your slider
+    sortTimer->setInterval(adjustedInterval);
 
     connect(ui->speedSlider, &QSlider::valueChanged, this, [this](int newValue) {
-        sortTimer->setInterval(newValue);
-        ui->speedSlider->setToolTip(QString("Speed: %1 ms").arg(newValue));
+        int invertedInterval = std::max(50, 1000 - newValue); // Invert logic
+        sortTimer->setInterval(invertedInterval);
+        ui->speedSlider->setToolTip(QString("Speed: %1 ms per step").arg(invertedInterval));
     });
 
     /* ── Algorithm selector ─────────────────────────── */
@@ -233,7 +236,7 @@ void MainWindow::onSortButtonClicked()
             b->SetAngularVelocity(0.0f);
         }
 
-        sortTimer->start(ui->speedSlider->value());  // 1 s per step
+        sortTimer->start(std::max(50, 1000 - ui->speedSlider->value()));  // 1 s per step
                ui->sortButton->setText("Pause Sort");
     }
 }

@@ -38,13 +38,6 @@ public:
     void syncWithPhysics();
 
     /**
-     * Gets the value of this block
-     *
-     * @return The block's value
-     */
-    int getValue() const { return m_value; }
-
-    /**
      * Moves the block to the specified index position
      *
      * @param index The target position index
@@ -59,6 +52,14 @@ public:
     bool isMoving() const { return m_isMoving; }
 
     /**
+     * Highlights the block for visualization purposes
+     *
+     * @param isActive Whether the block is being compared/active
+     * @param isSorted Whether the block is in its sorted position
+     */
+    void highlight(bool isActive, bool isSorted = false);
+
+    /**
      * Gets the Box2D body of this block
      *
      * @return The Box2D body
@@ -66,12 +67,11 @@ public:
     b2Body* getBody() const { return body; }
 
     /**
-     * Highlights the block for visualization purposes
+     * Gets the value of this block
      *
-     * @param isActive Whether the block is being compared/active
-     * @param isSorted Whether the block is in its sorted position
+     * @return The block's value
      */
-    void highlight(bool isActive, bool isSorted = false);
+    int getValue() const { return m_value; }
 
 private:
     b2Body* body;                       // Box2D representation

@@ -20,7 +20,7 @@ PhysicsBlock::PhysicsBlock(b2World* world, float x, float y, int value)
 
     label = new QGraphicsSimpleTextItem(QString::number(value), this);
     QFont f = label->font();
-    f.setPointSize(28);
+    f.setPointSize(35);
     f.setBold(true);
     label->setFont(f);
     label->setPos(-20, -20);
@@ -40,7 +40,7 @@ PhysicsBlock::PhysicsBlock(b2World* world, float x, float y, int value)
     fixtureDef.shape = &shape;
     fixtureDef.density = 1.0f;
     fixtureDef.friction = 0.3f;
-    fixtureDef.restitution = 0.1f; // Less bouncing
+    fixtureDef.restitution = 0.7f; // Less bouncing
 
     body->CreateFixture(&fixtureDef);
 }
@@ -59,7 +59,7 @@ void PhysicsBlock::syncWithPhysics()
             body->SetLinearVelocity(b2Vec2_zero);
             body->SetAngularVelocity(0.0f);
         } else {
-            float speed = 2.0f;
+            float speed = 3.0f;
             float vx = (dx > 0 ? 1.0f : -1.0f) * speed;
             body->SetType(b2_kinematicBody);
             body->SetLinearVelocity(b2Vec2(vx, 0.0f));
