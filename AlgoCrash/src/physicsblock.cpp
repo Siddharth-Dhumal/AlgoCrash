@@ -45,43 +45,60 @@ PhysicsBlock::PhysicsBlock(b2World* world, float x, float y, int value)
     body->CreateFixture(&fixtureDef);
 }
 
+namespace {
+    // World (meters) → Scene (pixels), including Y flip
+    QPointF worldToScene(const b2Vec2& w) {
+        return QPointF(w.x * kPixelsPerMeter,
+                       -w.y * kPixelsPerMeter);
+    }
+    // Radians → Qt degrees (with sign flip)
+    float radToDeg(float rad) {
+        return -rad * kRadiansToDegrees;
+    }
+}
+
 void PhysicsBlock::syncWithPhysics()
 {
     b2Vec2 pos = body->GetPosition();
 
+    // 1) Handle kinematic “moveToPosition” animation
     if (m_isMoving) {
         float dx = m_targetPosition.x - pos.x;
-
         if (std::abs(dx) < 0.05f) {
+            // Close enough: snap to target and become static
             m_isMoving = false;
             body->SetTransform(m_targetPosition, 0.0f);
             body->SetType(b2_staticBody);
             body->SetLinearVelocity(b2Vec2_zero);
             body->SetAngularVelocity(0.0f);
         } else {
-            float speed = 3.0f;
-            float vx = (dx > 0 ? 1.0f : -1.0f) * speed;
+            // Slide toward target at kMoveSpeed
+            float vx = (dx > 0 ? 1.0f : -1.0f) * kMoveSpeed;
             body->SetType(b2_kinematicBody);
             body->SetLinearVelocity(b2Vec2(vx, 0.0f));
         }
-        pos = body->GetPosition();
+        pos = body->GetPosition();  // update after kinematic move
     }
 
+    // 2) Detect landing: nearly still and below threshold
     if ((body->GetType() == b2_dynamicBody || body->GetType() == b2_kinematicBody) &&
         body->GetLinearVelocity().Length() < 0.01f &&
-        body->GetPosition().y <= -4.4f)
+        pos.y <= kLandingYThreshold)
     {
+        // Snap to uniform landing level
         body->SetType(b2_staticBody);
         body->SetLinearVelocity(b2Vec2_zero);
         body->SetAngularVelocity(0.0f);
 
-        b2Vec2 position = body->GetPosition();
-        position.y = -4.5f;  // uniform landing level
-        body->SetTransform(position, 0.0f);  // Apply position
+        b2Vec2 landingPos = body->GetPosition();
+        landingPos.y = kLandingYSnap;
+        body->SetTransform(landingPos, 0.0f);
     }
 
-    setPos(pos.x * 100.0f, -pos.y * 100.0f);
-    setRotation(-body->GetAngle() * 180.0f / M_PI);
+    // 3) Finally, update the Qt item’s position & rotation
+    QPointF scenePos = worldToScene(pos);
+    setPos(scenePos);
+    setRotation(radToDeg(body->GetAngle()));
 }
 
 void PhysicsBlock::moveToPosition(size_t index)
@@ -97,6 +114,8 @@ void PhysicsBlock::moveToPosition(size_t index)
 
 void PhysicsBlock::highlight(bool isActive, bool isSorted)
 {
+    m_activeHighlight = isActive;
+    m_sortedHighlight = isSorted;
     if (isSorted) {
         setBrush(QBrush(Qt::green)); // Green for sorted
     }
@@ -106,4 +125,10 @@ void PhysicsBlock::highlight(bool isActive, bool isSorted)
     else {
         setBrush(QBrush(Qt::white)); // White = default
     }
+}
+
+void PhysicsBlock::setValue(int newValue)
+{
+    m_value = newValue;
+    label->setText(QString::number(newValue));
 }

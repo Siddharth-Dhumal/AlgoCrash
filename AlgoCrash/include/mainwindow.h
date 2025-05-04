@@ -17,6 +17,7 @@
 #include "physicsblock.h"
 #include "sortingcontroller.h"
 #include <QLabel>
+#include <random>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -61,7 +62,7 @@ private slots:
     /**
      * Handles Step button clicks to advance the sorting algorithm one step
      */
-    void onStepButtonClicked();
+    void onStepForwardButtonClicked();
 
     /**
      * Handles Sort button clicks to start/pause the automatic sorting
@@ -77,6 +78,8 @@ private slots:
      * Handles Customize button clicks to allow custom data input
      */
     void onCustomizeButtonClicked();
+    void onStepBackwardButtonClicked();
+
 
 private:
     Ui::MainWindow *ui;
@@ -104,6 +107,9 @@ private:
     QLabel* sortedLabel;
     bool areBlocksSettled() const;
     void updateButtonStates();
+    std::mt19937                        m_rng;
+    std::uniform_real_distribution<float> m_offsetDist;
+    std::uniform_real_distribution<float> m_heightDist;
 };
 
 #endif // MAINWINDOW_H

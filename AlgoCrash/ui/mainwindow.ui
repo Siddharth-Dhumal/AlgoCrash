@@ -136,9 +136,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QPushButton" name="stepButton">
+       <widget class="QPushButton" name="stepForwardButton">
         <property name="text">
-         <string>Step</string>
+         <string>Step Forward</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="stepBackwardButton">
+        <property name="text">
+         <string>Step Backward</string>
         </property>
        </widget>
       </item>

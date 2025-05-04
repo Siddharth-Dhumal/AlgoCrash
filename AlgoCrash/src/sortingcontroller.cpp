@@ -72,6 +72,10 @@ bool SortingController::bubbleSortStep()
             block->highlight(false);
     }
 
+    if (!m_isComplete && !m_isSwapping && m_phase == HIGHLIGHT) {
+        saveState();
+    }
+
     if (m_phase == HIGHLIGHT) {
         for (auto block : m_blocks)
             block->highlight(false);
@@ -136,6 +140,10 @@ bool SortingController::insertionSortStep()
         for (auto *b : m_blocks) b->highlight(false);
     }
 
+    if (!m_isComplete && !m_isSwapping && m_phase == HIGHLIGHT) {
+        saveState();
+    }
+
     if (m_phase == HIGHLIGHT) {
         /* end of inner scan? */
         if (m_innerIdx == 0 ||
@@ -146,8 +154,16 @@ bool SortingController::insertionSortStep()
                 m_isComplete = true;
                 if (statusCallback)
                     statusCallback("Insertion Sort complete!");
+
+                // 1) Highlight sorted
                 for (auto* block : m_blocks)
-                    block->highlight(true, true);  // green
+                    block->highlight(true, true);
+
+                // 2) Reposition all blocks
+                for (size_t i = 0; i < m_blocks.size(); ++i)
+                    m_blocks[i]->moveToPosition(i);
+
+                // 3) End
                 return false;
             }
             m_innerIdx = m_outerIdx;
@@ -192,6 +208,10 @@ bool SortingController::selectionSortStep()
             if (b->isMoving()) return true;
         m_isSwapping = false;
         for (auto *b : m_blocks) b->highlight(false);
+    }
+
+    if (!m_isComplete && !m_isSwapping && m_phase == HIGHLIGHT) {
+        saveState();
     }
 
     if (m_phase == HIGHLIGHT) {
@@ -283,18 +303,133 @@ bool SortingController::isSortingComplete() const
 void SortingController::reset()
 {
     m_phase = HIGHLIGHT;
-    m_currentIndex      = 0;
-    m_lastSortedIndex   = 0;
-    m_isComplete        = false;
-    m_isSwapping        = false;
-    m_comparisonCount   = 0;
-    m_swapCount         = 0;
+    m_lastSortedIndex = 0;
+    m_isComplete      = false;
+    m_isSwapping      = false;
+    m_comparisonCount = 0;
+    m_swapCount       = 0;
 
-    m_outerIdx          = 1;
-    m_innerIdx          = 1;
-    m_minIndex = 0;
-    // Reset highlights
+    // For bubble and insertion, start comparing at index 0.
+    // For selection, start at index 1 vs index 0.
+    if (m_algorithm == SELECTION) {
+        m_minIndex     = m_lastSortedIndex;       // = 0
+        m_currentIndex = m_lastSortedIndex + 1;   // = 1
+    } else {
+        m_minIndex     = 0;
+        m_currentIndex = 0;
+    }
+
+    // Insertion-sort uses these; bubble ignores them.
+    m_outerIdx = 1;
+    m_innerIdx = 1;
+
+    // Reset highlights on all blocks
     for (PhysicsBlock* block : m_blocks) {
         block->highlight(false);
+    }
+
+    // Clear undo history
+    history.clear();
+}
+
+void SortingController::saveState() {
+    SortState snapshot;
+    snapshot.phase = m_phase;
+    snapshot.currentIndex = m_currentIndex;
+    snapshot.lastSortedIndex = m_lastSortedIndex;
+    snapshot.isComplete = m_isComplete;
+    snapshot.isSwapping = m_isSwapping;
+    snapshot.comparisonCount = m_comparisonCount;
+    snapshot.swapCount = m_swapCount;
+    snapshot.outerIdx = m_outerIdx;
+    snapshot.innerIdx = m_innerIdx;
+    snapshot.minIndex = m_minIndex;
+    snapshot.algorithm = m_algorithm;
+
+    // Save block order
+    snapshot.blocks = m_blocks;
+
+    history.push_back(snapshot);
+}
+
+bool SortingController::restoreState() {
+    if (history.empty())
+        return false;
+
+    // Pop the last snapshot
+    SortState prev = history.back();
+    history.pop_back();
+
+    // Restore all controller fields
+    m_phase           = prev.phase;
+    m_currentIndex    = prev.currentIndex;
+    m_lastSortedIndex = prev.lastSortedIndex;
+    m_isComplete      = prev.isComplete;
+    m_isSwapping      = prev.isSwapping;
+    m_comparisonCount = prev.comparisonCount;
+    m_swapCount       = prev.swapCount;
+    m_outerIdx        = prev.outerIdx;
+    m_innerIdx        = prev.innerIdx;
+    m_minIndex        = prev.minIndex;
+    m_algorithm       = prev.algorithm;
+
+    // Restore the block order
+    m_blocks = prev.blocks;
+
+    // Animate blocks back to their stored positions,
+    // and clear any existing highlight on each:
+    for (size_t i = 0; i < m_blocks.size(); ++i) {
+        m_blocks[i]->moveToPosition(i);
+        m_blocks[i]->highlight(false);
+    }
+
+    // If we've just popped the *last* snapshot (history is now empty),
+    // that means we're back at the very beginning—no highlights at all.
+    if (history.empty()) {
+        // Nothing more to do; all blocks remain un-highlighted.
+        return true;
+    }
+
+    // Otherwise, re-apply the correct two-block (or full-green) highlights
+    reapplyHighlights();
+    return true;
+}
+
+void SortingController::reapplyHighlights()
+{
+    // 1) Clear all highlights first
+    for (auto *b : m_blocks)
+        b->highlight(false);
+
+    // 2) If we’re fully sorted, color them all green
+    if (m_isComplete) {
+        for (auto *b : m_blocks)
+            b->highlight(true, true);
+        return;
+    }
+
+    // 3) Otherwise, re-highlight based on algorithm & phase
+    switch (m_algorithm) {
+    case BUBBLE:
+        if (m_phase == HIGHLIGHT && m_currentIndex + 1 < m_blocks.size()) {
+            m_blocks[m_currentIndex]    ->highlight(true);
+            m_blocks[m_currentIndex + 1]->highlight(true);
+        }
+        break;
+
+    case INSERTION:
+        if (m_phase == HIGHLIGHT && m_innerIdx < m_blocks.size()) {
+            m_blocks[m_innerIdx]          ->highlight(true);
+            if (m_innerIdx > 0)
+                m_blocks[m_innerIdx - 1]->highlight(true);
+        }
+        break;
+
+    case SELECTION:
+        if (m_phase == HIGHLIGHT && m_currentIndex < m_blocks.size()) {
+            m_blocks[m_currentIndex]->highlight(true);
+            m_blocks[m_minIndex]   ->highlight(true);
+        }
+        break;
     }
 }

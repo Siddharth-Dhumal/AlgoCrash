@@ -18,10 +18,15 @@
 #include <QMessageBox>
 #include <QLineEdit>
 
+static const b2Vec2 kGravity{0.0f, -10.0f};
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
     ui(new Ui::MainWindow),
-    world(new b2World(b2Vec2(0.0f, -10.0f))) // Gravity
+    world(new b2World(kGravity)), // Gravity
+    m_rng(std::random_device{}()),
+    m_offsetDist(-0.1f, 0.1f),
+    m_heightDist(4.0f, 5.0f)
 {
     ui->setupUi(this);
 
@@ -35,6 +40,19 @@ MainWindow::MainWindow(QWidget *parent)
         int invertedInterval = std::max(50, 1000 - newValue); // Invert logic
         sortTimer->setInterval(invertedInterval);
         ui->speedSlider->setToolTip(QString("Speed: %1 ms per step").arg(invertedInterval));
+    });
+
+    // Now wire this same timer to actually run the sort step
+    connect(sortTimer, &QTimer::timeout, this, [this]() {
+        // Each time the timer “ticks,” do one sort step:
+        if (!sortController.step()) {
+            // If sortController.step() returns false, the sort is done.
+            sortTimer->stop();
+            ui->sortButton->setText("Start Sort");
+            sortedLabel->setVisible(true);
+        }
+        // And always update the labels:
+        updateStatistics();
     });
 
     /* ── Algorithm selector ─────────────────────────── */
@@ -94,8 +112,6 @@ MainWindow::MainWindow(QWidget *parent)
     sortedLabel->setVisible(false);
 
     ui->verticalLayout->insertWidget(3, sortedLabel);
-    // Seed random number generator
-    srand(static_cast<unsigned int>(time(nullptr)));
 
     // Set up graphics scene
     scene = new QGraphicsScene(this);
@@ -139,19 +155,10 @@ MainWindow::MainWindow(QWidget *parent)
     });
     simTimer->start(16); // ~60 FPS
 
-    // Timer for automatic sorting (disabled by default)
-    sortTimer = new QTimer(this);
-    connect(sortTimer, &QTimer::timeout, this, [=]() {
-
-        if (!sortController.step()) {
-            sortTimer->stop();
-            ui->sortButton->setText("Start Sort");
-        }
-        updateStatistics();
-    });
-
     // Connect UI buttons
-    connect(ui->stepButton, &QPushButton::clicked, this, &MainWindow::onStepButtonClicked);
+    connect(ui->stepForwardButton, &QPushButton::clicked, this, &MainWindow::onStepForwardButtonClicked);
+    connect(ui->stepBackwardButton, &QPushButton::clicked,
+            this, &MainWindow::onStepBackwardButtonClicked);
     connect(ui->sortButton, &QPushButton::clicked, this, &MainWindow::onSortButtonClicked);
     connect(ui->resetButton, &QPushButton::clicked, this, &MainWindow::onResetButtonClicked);
     connect(ui->customizeButton, &QPushButton::clicked,
@@ -184,12 +191,10 @@ void MainWindow::spawnInitialBlocks(const std::vector<int>& values)
 
     for (size_t i = 0; i < values.size(); ++i)
     {
-        // Add slight random offset to x position (±0.1)
-        float randomXOffset = (static_cast<float>(rand()) / static_cast<float>(RAND_MAX) - 0.5f) * 0.2f;
+        float randomXOffset = m_offsetDist(m_rng);
         float x = startX + i * spacing + randomXOffset;
 
-        // Add random variation to drop height (between 4.0 and 5.0)
-        float randomHeight = 4.0f + (static_cast<float>(rand()) / static_cast<float>(RAND_MAX)) * 1.0f;
+        float randomHeight = m_heightDist(m_rng);
 
         PhysicsBlock* block = new PhysicsBlock(world, x, randomHeight, values[i]);
         scene->addItem(block);
@@ -197,7 +202,7 @@ void MainWindow::spawnInitialBlocks(const std::vector<int>& values)
     }
 }
 
-void MainWindow::onStepButtonClicked()
+void MainWindow::onStepForwardButtonClicked()
 {
     // sortController.step();
     // updateStatistics();
@@ -215,8 +220,10 @@ void MainWindow::onStepButtonClicked()
     // Then start the next step.
     if (!sortController.step()) {
         ui->sortButton->setText("Start Sort");
+        sortedLabel->setVisible(true);
     }
     updateStatistics();
+    updateButtonStates();
 }
 
 void MainWindow::onSortButtonClicked()
@@ -237,13 +244,15 @@ void MainWindow::onSortButtonClicked()
             b->SetAngularVelocity(0.0f);
         }
 
-        sortTimer->start(std::max(50, 1000 - ui->speedSlider->value()));  // 1 s per step
-               ui->sortButton->setText("Pause Sort");
+        sortTimer->start();  // 1 s per step
+        ui->sortButton->setText("Pause Sort");
     }
+    updateButtonStates();
 }
 
 void MainWindow::onResetButtonClicked()
 {
+    sortedLabel->setVisible(false);
     world->SetGravity(b2Vec2(0.0f, -10.0f));
 
     // Stop sorting
@@ -270,12 +279,12 @@ void MainWindow::onResetButtonClicked()
 
     // Update statistics
     updateStatistics();
+    updateButtonStates();
 }
 
 void MainWindow::onCustomizeButtonClicked()
 {
-    world->SetGravity(b2Vec2(0.0f, -10.0f));
-
+    world->SetGravity(kGravity);
     bool ok;
     QString text = QInputDialog::getText(
         this,
@@ -288,26 +297,48 @@ void MainWindow::onCustomizeButtonClicked()
     if (!ok || text.isEmpty())
         return;
 
+    // --- New parsing & validation ---
     QStringList parts = text.split(",", Qt::SkipEmptyParts);
     std::vector<int> values;
+    QStringList invalidTokens;
+
     for (const QString& part : parts) {
-        bool numOk = false;
-        int val = part.trimmed().toInt(&numOk);
-        if (numOk) values.push_back(val);
+        QString token = part.trimmed();
+        bool   numOk  = false;
+        int    val    = token.toInt(&numOk);
+        if (numOk) {
+            values.push_back(val);
+        } else {
+            invalidTokens.append(token);
+        }
     }
+
     if (values.empty()) {
         QMessageBox::warning(
             this,
             "Invalid Input",
-            "Please enter valid integers separated by commas."
+            "No valid integers were entered. Please enter only whole numbers separated by commas."
             );
         return;
     }
 
+    if (!invalidTokens.isEmpty()) {
+        QMessageBox::information(
+            this,
+            "Some Values Ignored",
+            QString("The following entries were not valid integers "
+                    "and have been ignored:\n%1")
+                .arg(invalidTokens.join(", "))
+            );
+    }
+    // --- End of new validation ---
+
+    // Hide “complete” label and reset UI
+    sortedLabel->setVisible(false);
     sortTimer->stop();
     ui->sortButton->setText("Start Sort");
-    sortedLabel->setVisible(false);
 
+    // Clear old blocks...
     for (PhysicsBlock* block : blocks) {
         scene->removeItem(block);
         world->DestroyBody(block->getBody());
@@ -315,6 +346,7 @@ void MainWindow::onCustomizeButtonClicked()
     }
     blocks.clear();
 
+    // Spawn with the validated values
     spawnInitialBlocks(values);
     sortController.setBlocks(blocks);
     sortController.statusCallback = [this](const QString& msg) {
@@ -322,8 +354,8 @@ void MainWindow::onCustomizeButtonClicked()
     };
 
     ui->explanationLabel->setText("Custom data loaded! Click 'Start Sort' to begin.");
-
     updateStatistics();
+    updateButtonStates();
 }
 
 void MainWindow::updateStatistics()
@@ -359,6 +391,36 @@ bool MainWindow::areBlocksSettled() const
 void MainWindow::updateButtonStates()
 {
     bool ready = areBlocksSettled();
+    bool hasHistory = !sortController.isHistoryEmpty();
     ui->sortButton->setEnabled(ready);
-    ui->stepButton->setEnabled(ready);
+    ui->stepForwardButton->setEnabled(ready);
+    ui->stepBackwardButton->setEnabled(hasHistory);
+}
+
+void MainWindow::onStepBackwardButtonClicked()
+{
+    // Freeze physics during undo to prevent jitter
+    world->SetGravity(b2Vec2(0.0f, 0.0f));
+    for (PhysicsBlock* block : blocks) {
+        b2Body* body = block->getBody();
+        body->SetType(b2_staticBody);
+        body->SetLinearVelocity(b2Vec2_zero);
+        body->SetAngularVelocity(0.0f);
+    }
+
+    if (sortController.restoreState()) {
+        updateStatistics();
+        ui->explanationLabel->setText("Step backward complete.");
+
+        for (PhysicsBlock* b : blocks)
+            b->syncWithPhysics();
+
+        // Restore gravity after one frame
+        QTimer::singleShot(0, [this]() {
+            world->SetGravity(b2Vec2(0.0f, -10.0f));
+        });
+    } else {
+        ui->explanationLabel->setText("Nothing to undo.");
+    }
+    updateButtonStates();
 }

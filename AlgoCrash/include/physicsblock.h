@@ -13,6 +13,11 @@
 #include <QGraphicsSimpleTextItem>
 #include <Box2D/Box2D.h>
 
+static constexpr float kPixelsPerMeter = 100.0f;
+static constexpr float kRadiansToDegrees = 180.0f / M_PI;
+static constexpr float kLandingYThreshold    = -4.4f;
+static constexpr float kLandingYSnap         = -4.5f;
+static constexpr float kMoveSpeed            = 3.0f;
 /**
  * PhysicsBlock
  *
@@ -73,12 +78,23 @@ public:
      */
     int getValue() const { return m_value; }
 
+    /**
+     * Sets the displayed value and updates the label
+     * @param newValue The new value to display
+     */
+    void setValue(int newValue);
+    bool isActiveHighlight() const { return m_activeHighlight; }
+    bool isSortedHighlight() const { return m_sortedHighlight; }
+
+
 private:
     b2Body* body;                       // Box2D representation
     QGraphicsSimpleTextItem* label;     // Numeric label
     int m_value;                        // Stored integer
     bool m_isMoving;                    // Animation flag
     b2Vec2 m_targetPosition;            // Destination for animation
+    bool m_activeHighlight  = false;
+    bool m_sortedHighlight  = false;
 };
 
 #endif // PHYSICSBLOCK_H

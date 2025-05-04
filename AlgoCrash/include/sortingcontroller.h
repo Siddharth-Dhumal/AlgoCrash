@@ -103,6 +103,22 @@ public:
      * @return False when sorting is complete, true otherwise
      */
     bool selectionSortStep();
+    bool restoreState();
+
+    /**
+    * Checks if the undo history is empty
+    *
+    * @return True if history is empty, false otherwise
+    */
+    bool isHistoryEmpty() const { return history.empty(); }
+
+    /**
+     * After a restore, re-highlight the two blocks that would
+     * next be compared (or the current “min” in selection),
+     * or show the sorted state if complete.
+     */
+    void reapplyHighlights();
+
 
 private:
     /**
@@ -133,6 +149,33 @@ private:
      * @param index2 The index of the second block
      */
     void performSwap(size_t index1, size_t index2);
+
+    /**
+     * Saves the current state into history
+     */
+    void saveState();
+
+    /**
+     * Struct to represent one complete snapshot of the sort state
+     */
+    struct SortState {
+        Phase phase;
+        size_t currentIndex;
+        size_t lastSortedIndex;
+        bool isComplete;
+        bool isSwapping;
+        int comparisonCount;
+        int swapCount;
+        size_t outerIdx;
+        size_t innerIdx;
+        size_t minIndex;
+        Algorithm algorithm;
+        std::vector<PhysicsBlock*> blocks;
+        std::vector<bool> wasActiveHighlight;
+        std::vector<bool> wasSortedHighlight;
+    };
+
+    std::vector<SortState> history;
 };
 
 #endif // SORTINGCONTROLLER_H
